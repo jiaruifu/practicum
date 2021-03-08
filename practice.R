@@ -61,6 +61,15 @@ DAPS <- DAPSchoiceModel(ppchar, trt.col = 10, balance = bal$balance,
                         cutoff = 0.15, pairs = bal$pairs,
                         weights = seq(0, 1, length.out = 40))
 
+daps1 <- DAPSest(ppchar, out.col = 9, trt.col = 10, caliper = 0.3,
+                 weight = 0.513, coords.columns = c(7, 8),
+                 pairsRet = TRUE, cov.cols = 1:6, cutoff = 0.15,
+                 w_tol = 0.001, coord_dist = TRUE, caliper_type = 'DAPS',
+                 matching_algorithm = 'greedy')
+
+
+MatchedDataMap(x = daps1$pairs, trt_coords = c(3, 4), con_coords = c(7, 8))
+
 MatchedDataMap(x = bal$full_pairs[[10]], trt_coords = c(3, 4),
                con_coords = c(7, 8))
 
@@ -98,4 +107,6 @@ PlotWeightBalance(bal2$balance,  weights = seq(0, 1, length.out = 40), cutoff = 
 DAPS2 <- DAPSchoiceModel(alchar, trt.col = 16, balance = bal2$balance,
                         cutoff = 0.15, pairs = bal2$pairs,
                         weights = seq(0, 1, length.out = 40))
+
+
 
