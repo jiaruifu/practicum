@@ -32,15 +32,18 @@ summary(mod)
 #                       design = svydesign(~ 1, weights = ~ weights, data=psmatch1.data))
 #summary(psmatch1.mod)
 
+# hardcode weight=0.513
 daps <- DAPSest(cov, out.col = 21, trt.col = 22, caliper = 0.3,
                  weight = 0.513, coords.columns = c(4, 3),
                  pairsRet = TRUE, cov.cols = 1:20, cutoff = 0.15,
                  w_tol = 0.001, coord_dist = TRUE, caliper_type = 'DAPS',
                  matching_algorithm = 'greedy')
 paired <- as.data.frame(daps[["pairs"]])
+# matching by DAPS
 id <- paired$IDtrt
 treat <- cov[id, ]
 con <- cov[paired$IDcon,]
+# paired t-test
 t.test(treat$Y, con$Y, paired = TRUE)
 mean(treat$Y) - mean(con$Y)
 
