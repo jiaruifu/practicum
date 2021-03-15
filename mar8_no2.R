@@ -51,6 +51,7 @@ con <- cov[paired$IDcon,]
 t.test(treat$Y, con$Y, paired=TRUE)
 mean(treat$Y) - mean(con$Y)
 
+# estimate (fit another regression) vs true values of Y???
 fittreat <- glm(Y ~ .-prop.scores, data = treat)
 summary(fittreat$fitted.values)
 
