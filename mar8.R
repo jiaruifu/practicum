@@ -43,8 +43,9 @@ paired <- as.data.frame(daps[["pairs"]])
 id <- paired$IDtrt
 treat <- cov[id, ]
 con <- cov[paired$IDcon,]
-# paired t-test
+# paired t-test? ozone non-significant
 t.test(treat$Y, con$Y, paired = TRUE)
+# estimate = diff of means
 mean(treat$Y) - mean(con$Y)
 
 
