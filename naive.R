@@ -30,6 +30,7 @@ plot(psmatch, type="hist")
 
 psmatch.data <- match.data(psmatch)
 
+# matching shows error!
 psmatch.data$Y <- as.numeric(psmatch.data$Y)
 psmatch.mod <- svyglm(Y ~ ., design = svydesign(ids = ~1,data = psmatch.data,weights = ~ weights), rescale=TRUE)
 summary(psmatch.mod)
