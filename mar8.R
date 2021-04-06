@@ -2,7 +2,7 @@ library(devtools)
 library(MatchIt)
 library(survey)
 
-devtools::install_github("gpapadog/DAPSm")
+#devtools::install_github("gpapadog/DAPSm")
 library(DAPSm)
 
 setwd('/Users/JiaruiFu/Desktop/practicum/practicum')
@@ -32,6 +32,42 @@ summary(mod)
 #                       design = svydesign(~ 1, weights = ~ weights, data=psmatch1.data))
 #summary(psmatch1.mod)
 
+# different weight method, confidence interval for ozone
+
+# fixed weight optimal (matching failed)
+daps_fixed_optimal <- DAPSest(cov, out.col = 21, trt.col = 22, caliper = 0.3,
+                              weight = 0.513, coords.columns = c(4, 3),
+                              pairsRet = TRUE, cov.cols = 1:20, cutoff = 0.15,
+                              coord_dist = TRUE, caliper_type = 'DAPS',w_tol = 0.001,
+                              matching_algorithm = 'optimal')
+
+# fast search of optimal weight (searched weight = 0.852)
+daps_search_optimal <- DAPSest(cov, out.col = 21, trt.col = 22, caliper = 0.3,
+                               weight = 'optimal', coords.columns = c(4, 3),
+                               pairsRet = TRUE, cov.cols = 1:20, cutoff = 0.15,
+                               w_tol = 0.001, coord_dist = TRUE, caliper_type = 'DAPS',
+                               matching_algorithm = 'greedy')
+
+est_opt_search <- daps_search_optimal$est
+se_opt_search <- daps_search_optimal$se
+est_opt_search - 1.96*se_opt_search
+est_opt_search + 1.96*se_opt_search
+
+# extensive search of optimal weight (searched weight = 0.846)
+bal <- CalcDAPSWeightBalance(cov, weights = seq(0, 1, length.out = 40),
+                             cov.cols = 1:20, trt.col = 22,
+                             coords.columns = c(4, 3), caliper = 0.3,
+                             matching_algorithm = 'greedy')
+
+daps_extensive_optimal <- DAPSchoiceModel(cov, trt.col = 22, balance = bal$balance,
+                                          cutoff = 0.15, pairs = bal$pairs,
+                                          weights = seq(0, 1, length.out = 40))
+
+est_ext_search <- daps_extensive_optimal$est
+se_ext_search <- daps_extensive_optimal$se
+est_ext_search - 1.96*se_ext_search
+est_ext_search + 1.96*se_ext_search
+
 # hardcode weight=0.513
 daps <- DAPSest(cov, out.col = 21, trt.col = 22, caliper = 0.3,
                  weight = 0.513, coords.columns = c(4, 3),
@@ -43,13 +79,40 @@ paired <- as.data.frame(daps[["pairs"]])
 id <- paired$IDtrt
 treat <- cov[id, ]
 con <- cov[paired$IDcon,]
+
+matched <- rbind(treat, con)
+
 # paired t-test? ozone non-significant
-t.test(treat$Y, con$Y, paired = TRUE)
+dif <- t.test(treat$Y, con$Y, paired = TRUE)
 # estimate = diff of means
 mean(treat$Y) - mean(con$Y)
 
+confint_tabel <- rbind(est_opt_search, est_ext_search, dif$estimate)
+confint_tabel <- data.frame(confint_tabel, row.names = c('Fast Search','Extensive Search' , 'Fixed Weight (Greedy)'))
+confint_tabel$LB <- c(est_opt_search - 1.96*se_opt_search, est_ext_search - 1.96*se_ext_search, dif$conf.int[1])
+confint_tabel$UB <- c(est_opt_search + 1.96*se_opt_search, est_ext_search + 1.96*se_ext_search, dif$conf.int[2])
+colnames(confint_tabel) <- c('Estimate', 'LB', 'UB')
 
-#fittreat <- glm(Y ~ Z, data = treat)
-#summary(fittreat$fitted.values)
+
+paired$distance <- ((paired$Trt.Fac.Longitude - paired$Con.Fac.Longitude)^2 + 
+                      (paired$Trt.Fac.Latitude - paired$Con.Fac.Latitude) ^2)^0.5
+
+weight <- 0.513
+paired$daps_propscore <- weight * abs(paired$Trt.prop.scores- paired$Con.prop.scores) +(1-weight)*paired$distance
+
+
+
+mean_treat <- colMeans(treat)
+#mean_con <- colMeans(con)
+sd_treat <- apply(treat, 2, sd, na.rm =TRUE)
+#sd_con <- apply(con, 2, sd, na.rm =TRUE)
+
+comp <- data.frame(mean_treat, sd_treat)
+
+
+
+ps.model<-glm(Z~., data = reg, family = binomial)
+summary(ps.model)
+ps <- predict(ps.model, type="response")
 
 #MatchedDataMap(x = daps$pairs, trt_coords = c(3, 4), con_coords = c(7, 8))
